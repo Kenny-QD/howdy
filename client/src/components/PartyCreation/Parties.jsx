@@ -21,6 +21,7 @@ class Parties extends React.Component {
   }
 
   componentDidMount() {
+    console.log(this.props.userId, 'party.jsx');
     const { imageUrl } = this.props;
     this.getParties();
     if (!imageUrl) {
@@ -34,9 +35,10 @@ class Parties extends React.Component {
   getParties() {
     axios.get('/api/homepage')
       .then((response) => {
+        console.log(response.data);
         this.setState({ parties: currentPartiesSorted(response.data) });
       })
-      .catch((error) => { throw error; });
+      .catch((error) => { console.log(error) });
   }
 
   // Get newly create party

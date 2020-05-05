@@ -10,6 +10,8 @@ class CreateParty extends React.Component {
     } = this.props;
     this.state = {
       name: '',
+      theme: 'original',
+      password: '',
       start: '',
       end: '',
       date: '',
@@ -44,17 +46,24 @@ class CreateParty extends React.Component {
     const {
       getNewPartyEntry, longitude, latitude, city, region, userId,
     } = this.props;
-
-    const { start, date, name } = this.state;
+    const {
+      start, date, name, recipient,
+    } = this.state;
     this.setState({
       textmessage: `Your party: ${name}, has been created for ${start} on ${date}`,
     });
+    console.log(this.state.theme);
     axios.post('/api/homepage', this.state)
-      .then(() => {
-        this.sendText();
+      .then((packet) => {
+        if (recipient) {
+          this.sendText();
+          axios.post('/api/rsvp/', { phoneNumber: recipient, roomId: packet.data.insertId });
+        }
         getNewPartyEntry();
         this.setState({
           name: '',
+          theme: 'original',
+          password: '',
           start: '',
           end: '',
           date: '',
@@ -68,12 +77,13 @@ class CreateParty extends React.Component {
           host_id: userId,
         });
       })
-      .catch((error) => error);
+      .catch((error) => console.log(error));
   }
+
 
   render() {
     const {
-      name, details, start, end, date, radius, recipient,
+      name, details, start, end, date, radius, password, recipient,
     } = this.state;
     return (
       <div className="party-creation">
@@ -161,6 +171,18 @@ class CreateParty extends React.Component {
                   </label>
                 </div>
                 <div className="form-group creation-group">
+                  <label htmlFor="password">
+                    Password (optional):
+                    <input
+                      className="form-control creation-items"
+                      type="text"
+                      name="password"
+                      value={password}
+                      onChange={this.handleChange}
+                    />
+                  </label>
+                </div>
+                <div className="form-group creation-group">
                   <label htmlFor="phone number">
                     Phone Number
                     <input
@@ -171,6 +193,22 @@ class CreateParty extends React.Component {
                       value={recipient}
                       onChange={this.handleChange}
                     />
+                  </label>
+                </div>
+                <div>
+                  <label htmlFor="theme">
+                    Theme:
+                    <select
+                      id="theme"
+                      name="theme"
+                      onChange={this.handleChange}
+                    >
+                      <option value="original">Original</option>
+                      <option value="dark">Dark</option>
+                      <option value="chill">Chill</option>
+                      <option value="neutral">Neutral</option>
+                      <option value="pixel cutie">Pixel Cutie</option>
+                    </select>
                   </label>
                 </div>
                 <div>

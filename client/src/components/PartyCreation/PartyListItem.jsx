@@ -1,10 +1,13 @@
+/* eslint-disable no-alert */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import Moment from 'react-moment';
-import distance from '../../Utils/LocationEquation.js';
-import { thirtyMinBeforeTodaysParty, formatTime, formatDate } from '../../Utils/time.js';
+import { Modal, Button } from 'react-bootstrap';
 import axios from 'axios';
+import distance from '../../Utils/LocationEquation';
+import { thirtyMinBeforeTodaysParty, formatTime, formatDate } from '../../Utils/time';
+import CalendarButton from './CalendarButton.jsx';
 
 const PartyListItem = ({
   party,
@@ -14,6 +17,8 @@ const PartyListItem = ({
   userId,
 }) => {
   const [redirect, setRedirect] = useState(false);
+  const [showModal, setModal] = useState(false);
+  const [phone, setPhone] = useState('');
 
   const joinParty = () => {
     setRedirect(true);
@@ -25,20 +30,35 @@ const PartyListItem = ({
     }
   };
 
+  const addPhone = () => {
+    console.log('hitting');
+    axios.post('/api/rsvp/', { phoneNumber: phone, roomId: party.id })
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((err) => console.error(err, 'this is the catch'));
+  };
+
   const canJoinParty = (date, start) => {
     axios.get(`/api/ban/${userId}/${party.id}`)
       .then((banned) => {
-        if(!banned.data) {
+        if (!banned.data) {
           const distanceFromParty = distance(party.host_lat, party.host_long, latitude, longitude);
           if (distanceFromParty <= party.radius) {
             if (thirtyMinBeforeTodaysParty(date, start)) {
-              getPartyInfo(party);
-              joinParty();
+              if (!party.password
+                  || party.host_id === userId
+                  || prompt('The host has set a password. Please enter it now') === party.password) {
+                getPartyInfo(party);
+                joinParty();
+              } else {
+                alert('Incorrect password.');
+              }
             } else {
-                alert(`The party hasn't started yet. You can join 30 minutes before ${formatTime(start)} on ${formatDate(date)}`);
+              alert(`The party hasn't started yet. You can join 30 minutes before ${formatTime(start)} on ${formatDate(date)}`);
             }
           } else {
-              alert(`
+            alert(`
                 You are ${Math.round(10 * distanceFromParty) / 10} mile(s) away from this party.
                 The host has invited people within ${party.radius} mile(s).`);
           }
@@ -46,14 +66,13 @@ const PartyListItem = ({
           alert('You have been banned from this party.');
         }
       });
-    
-   
   };
 
   const {
     name,
     date,
     start,
+    end,
     city,
     radius,
     details,
@@ -82,6 +101,33 @@ const PartyListItem = ({
             >
               Join Party
             </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setModal(true)}
+            >
+              RSVP
+            </button>
+            <Modal size="lg" show={showModal} onHide={() => setModal(false)}>
+              <Modal.Header closeButton>RSVP CONFIRMATION</Modal.Header>
+              <Modal.Body>
+                <p>Please input your phone number to receive a reminder</p>
+                <input type="number" name="phone" placeholder="ex.123-123-1234" onChange={(e) => setPhone(e.target.value)} />
+                <CalendarButton name={name} details={details} start={start} end={end} date={date} city={city} />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="secondary" onClick={() => setModal(false)}>No</Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    addPhone();
+                    setModal(false);
+                  }}
+                >
+                  Yes
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </div>
         </div>
       </div>

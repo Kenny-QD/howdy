@@ -6,9 +6,8 @@
 
 ## Team
 
-  - __Product Owner__: Heather Haylett
-  - __Scrum Master__: James Easter
-  - __Development Team Members__: Matt Hritz, Sean Hart, Chris Nguyen
+  - __Scrum Master__: Nico Paulino
+  - __Development Team Members__: Michael Bazile, Kenny Dang, Harley Padua, Jeremy Webber
 
 ## Table of Contents
 

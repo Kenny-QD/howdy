@@ -10,7 +10,9 @@ import Messages from './Messages.jsx';
 
 let socket;
 
-const ChatRoom = ({ partyInfo, username, userId }) => {
+const ChatRoom = ({
+  partyInfo, username, userId, setTheme,
+}) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [deleted, setDeleted] = useState([]);
@@ -19,11 +21,12 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
   const [kick, setKick] = useState(false);
 
   // DEVELOPMENT variable
-  const endPoint = 'localhost:8080';
+  const endPoint = process.env.ENDPOINT;
   // PRODUCTION variable
   // const endPoint = 'http://ec2-18-221-135-146.us-east-2.compute.amazonaws.com:8081/#/';
 
   useEffect(() => {
+    setTheme(partyInfo.theme);
     socket = io(endPoint);
     socket.emit('join', { room, username, userId }, () => { });
 
@@ -54,7 +57,6 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
     socket.on('receiveDelete', (message) => {
       setDeleted((deleted) => [...deleted, `${message.user}${message.text}${message.time}`]);
     });
-
   }, []);
 
   const sendMessage = (event) => {
@@ -64,19 +66,27 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
     }
   };
 
+  const sendPrivateMessage = (id, event, name) => {
+    event.preventDefault();
+    if (message) {
+      socket.emit('privateMessage', { message, id, name }, () => setMessage(''));
+    }
+  };
   const deleteMessage = (message) => {
-    if (username === partyInfo.hostname) {
+    if (userId === partyInfo.host_id) {
       socket.emit('deleteMessage', message);
     }
-  }
+  };
 
   const leftParty = () => {
+    setTheme('original');
     socket.emit('leaveParty');
   };
 
   const getKicked = () => {
+    setTheme('original');
     socket.emit('getKicked');
-  }
+  };
 
   const renderRedirect = () => {
     if (username || partyInfo.name) {
@@ -86,10 +96,10 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
   };
 
   const kickRedirect = () => {
-    if(kick) {
+    if (kick) {
       return <Redirect to="/parties" />;
     }
-  }
+  };
 
   const sendUrl = (imageUrl) => {
     socket.emit('sendMessage', { message: imageUrl }, () => setMessage(''));
@@ -102,7 +112,7 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
       }
       socket.emit('kickUser', id);
     }
-  }
+  };
 
   return (
     <div className="container-fluid chat-room">
@@ -128,6 +138,8 @@ const ChatRoom = ({ partyInfo, username, userId }) => {
             kickUser={kickUser}
             partyInfo={partyInfo}
             username={username}
+            userId={userId}
+            sendPrivateMessage={sendPrivateMessage}
           />
         </div>
         <div className="col sidebar">
